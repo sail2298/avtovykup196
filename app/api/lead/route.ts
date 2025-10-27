@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server";
 
-// 🕒 Универсальная функция fetch с таймаутом
-async function fetchWithTimeout(resource: string, options: any = {}, timeout = 20000) {
+// 🧠 Временная память (антиспам) — IP → время последней отправки
+const lastRequestMap = new Map<string, number>();
+
+// 🕒 Универсальный fetch с таймаутом
+async function fetchWithTimeout(
+  resource: string,
+  options: RequestInit = {},
+  timeout = 20000
+): Promise<Response> {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
 
@@ -19,6 +26,33 @@ export async function POST(req: Request) {
   try {
     console.log("✅ API вызван — lead route запущен");
 
+    // 🧱 Получаем IP пользователя
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "unknown";
+
+    const now = Date.now();
+    const lastRequest = lastRequestMap.get(ip) || 0;
+    const diff = now - lastRequest;
+
+    // 🚫 Если прошло меньше 10 секунд — блокируем
+    if (diff < 10_000) {
+      console.warn(`⏳ Частые запросы с IP ${ip}`);
+      return new NextResponse(
+        JSON.stringify({
+          ok: false,
+          error: "Слишком частые запросы. Повторите через 10 секунд.",
+        }),
+        {
+          status: 429,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // ✅ Разрешаем и запоминаем время последнего запроса
+    lastRequestMap.set(ip, now);
+
     const body = await req.json();
     console.log("📦 Получены данные формы:", body);
 
@@ -26,7 +60,13 @@ export async function POST(req: Request) {
 
     // 🧩 Проверка обязательных данных
     if (!phone) {
-      return NextResponse.json({ ok: false, error: "Phone is required" }, { status: 400 });
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Phone is required" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // 📱 Очистка и валидация номера
@@ -34,7 +74,13 @@ export async function POST(req: Request) {
     const isValid = /^(\+7|7|8)\d{10}$/.test(cleanPhone);
     if (!isValid) {
       console.warn("⚠️ Некорректный номер телефона:", phone);
-      return NextResponse.json({ ok: false, error: "Invalid phone number" }, { status: 400 });
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Invalid phone number" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     // ⚙️ Переменные окружения
@@ -43,27 +89,29 @@ export async function POST(req: Request) {
 
     if (!token || !chatIdsRaw) {
       console.error("❌ Отсутствует TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID");
-      return NextResponse.json({ ok: false, error: "Missing Telegram config" }, { status: 500 });
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Missing Telegram config" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     }
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
-    // 🧩 Экранирование для MarkdownV2
-    const escapeMd = (text: string) =>
-      text ? text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, "\\$1") : "-";
-
-    // 💬 Текст сообщения
+    // 💬 Формируем сообщение
     const message =
-      `🆕 *Новая заявка на выкуп авто*\n` +
+      `🆕 Новая заявка на выкуп авто\n` +
       `━━━━━━━━━━━━━━━━━━━\n` +
-      `👤 *Имя:* ${escapeMd(name)}\n` +
-      `📞 *Телефон:* ${escapeMd(cleanPhone)}\n` +
-      `🚗 *Марка:* ${escapeMd(brand)}\n` +
-      `🔧 *Модель:* ${escapeMd(model)}\n` +
-      `📅 *Год:* ${escapeMd(year)}\n` +
-      `⚙️ *Состояние:* ${escapeMd(type)}\n` +
-      `🕒 *Время:* ${escapeMd(new Date().toLocaleString("ru-RU"))}\n` +
+      `👤 Имя: ${name || "-"}\n` +
+      `📞 Телефон: ${cleanPhone}\n` +
+      `🚗 Марка: ${brand || "-"}\n` +
+      `🔧 Модель: ${model || "-"}\n` +
+      `📅 Год: ${year || "-"}\n` +
+      `⚙️ Состояние: ${type || "-"}\n` +
+      `🕒 Время: ${new Date().toLocaleString("ru-RU")}\n` +
       `━━━━━━━━━━━━━━━━━━━`;
 
     // 💬 Кнопка WhatsApp
@@ -79,35 +127,52 @@ export async function POST(req: Request) {
       ],
     };
 
-    // 🚀 Отправка в каждый чат
+    // 🚀 Отправка в Telegram
     for (const chatId of chatIds) {
-      const response = await fetchWithTimeout(
-        url,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: message,
-            parse_mode: "MarkdownV2",
-            reply_markup: keyboard,
-          }),
-        },
-        20000
-      );
+      try {
+        const response = await fetchWithTimeout(
+          url,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: message,
+              reply_markup: keyboard,
+            }),
+          },
+          20000
+        );
 
-      const data = await response.json();
+        let data: any = null;
+        try {
+          data = await response.json();
+        } catch {
+          console.error("⚠️ Не удалось разобрать ответ Telegram как JSON");
+        }
 
-      if (!data.ok) {
-        console.error(`❌ Ошибка Telegram (${chatId}):`, data.description);
-      } else {
-        console.log(`✅ Сообщение отправлено в чат ${chatId}`);
+        if (!data?.ok) {
+          console.error(`❌ Ошибка Telegram (${chatId}):`, data?.description || "Unknown error");
+        } else {
+          console.log(`✅ Сообщение отправлено в чат ${chatId}`);
+        }
+      } catch (err: any) {
+        console.error(`❌ Telegram fetch error (${chatId}):`, err.message);
       }
     }
 
-    return NextResponse.json({ ok: true });
+    return new NextResponse(JSON.stringify({ ok: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
   } catch (err: any) {
     console.error("❌ API error:", err);
-    return NextResponse.json({ ok: false, error: err.message || "Unknown error" }, { status: 500 });
+    return new NextResponse(
+      JSON.stringify({ ok: false, error: err.message || "Unknown error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 }

@@ -93,7 +93,7 @@ export default function Home() {
                 +7 <span className="text-[#C70000] font-bold">999</span> 566 1267
               </a>
               <p className="text-[11px] sm:text-[13px] font-light text-[#bfbfbf] mt-[-2px] tracking-wide">
-                Выкуп авто в <span className="text-[#ffffff]">Свердловской области</span> — быстро
+                Выкуп авто в <span className="text-[#ffffff]">Свердловской области</span> - быстро
               </p>
             </div>
           </div>
@@ -107,12 +107,12 @@ export default function Home() {
         <div className="max-w-lg text-center md:text-left">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight mb-6">
             <span className="text-[#C70000]">Выкуп авто</span> <br />
-            в Свердловской области —{" "}
+            в Свердловской области -{" "}
             <span className="text-[#C70000]">быстро</span>
           </h1>
           <p className="text-gray-200 text-base sm:text-lg leading-relaxed">
             Оценим ваш автомобиль за 5 минут и выкупим в день обращения. <br />
-            Любое состояние — не на ходу, после ДТП, кредитные и без документов.
+            Любое состояние - не на ходу, после ДТП, кредитные и без документов.
           </p>
         </div>
 
@@ -237,7 +237,7 @@ export default function Home() {
         </AnimatePresence>
 
         <p className="text-center text-sm mt-4 text-gray-300 leading-snug">
-          Просто <span className="text-red-600">оставьте заявку</span> — мы свяжемся с
+          Просто <span className="text-red-600">оставьте заявку</span> - мы свяжемся с
           вами в течение <span className="text-red-600">2 минут</span>.
         </p>
       </motion.div>
@@ -257,7 +257,7 @@ export default function Home() {
           Работаем по всей Свердловской области
         </h2>
         <p className="text-center max-w-3xl mx-auto text-gray-300 mb-10">
-          Мы приедем в любой город региона — оценим, оформим и выкупим ваш автомобиль в день обращения.
+          Мы приедем в любой город региона - оценим, оформим и выкупим ваш автомобиль в день обращения.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-gray-200 text-sm">
@@ -312,7 +312,7 @@ export default function Home() {
           </a>
 
           <p className="text-gray-400 text-sm mb-3 sm:mb-4">
-            © 2025 AvtoVykup196.ru — Все права защищены
+            © 2025 AvtoVykup196.ru - Все права защищены
           </p>
 
           <a
@@ -324,7 +324,7 @@ export default function Home() {
           </a>
         </div>
 
-        {/* Правая часть — кнопки */}
+        {/* Правая часть - кнопки */}
         <div className="flex items-center gap-4 flex-wrap justify-center sm:justify-end">
           {/* WhatsApp */}
           <a
