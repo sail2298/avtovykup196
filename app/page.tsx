@@ -6,6 +6,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState<boolean | null>(null);
   const [visible, setVisible] = useState(false);
+  const [status, setStatus] = useState<"idle" | "success" | "error" | "tooFast">("idle");
   const citiesRef = useRef<HTMLDivElement>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
