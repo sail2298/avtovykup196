@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [loading, setLoading] = useState(false);
@@ -29,19 +30,32 @@ export default function Home() {
     }
   }
 
-  // 👇 Анимация появления блока городов
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) setVisible(true);
-        });
-      },
-      { threshold: 0.3 }
-    );
-    if (citiesRef.current) observer.observe(citiesRef.current);
-    return () => observer.disconnect();
-  }, []);
+    // 👇 Анимация появления и исчезновения блока городов при скролле
+    useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setVisible(true);
+            } else {
+              setVisible(false);
+            }
+          });
+        },
+        {
+          threshold: 0.2,
+        }
+      );
+
+      if (citiesRef.current) observer.observe(citiesRef.current);
+
+      return () => {
+        if (citiesRef.current) observer.unobserve(citiesRef.current);
+        observer.disconnect();
+      };
+    }, []);
+
+
 
   return (
     <main
@@ -102,110 +116,148 @@ export default function Home() {
           </p>
         </div>
 
-        {/* ФОРМА */}
-        <div className="w-full md:w-[400px] bg-[#1a1a1a]/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 sm:p-8 shadow-2xl">
-          <h3 className="text-lg sm:text-xl font-semibold text-center mb-5 text-white">
-            Оцените стоимость авто
-          </h3>
+      {/* ФОРМА */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="w-full md:w-[400px] bg-[#1a1a1a]/80 backdrop-blur-lg border border-white/20 rounded-2xl p-6 sm:p-8 shadow-2xl"
+      >
+        <h3 className="text-lg sm:text-xl font-semibold text-center mb-5 text-white">
+          Оцените стоимость авто
+        </h3>
 
-          <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
+          {["name", "phone", "brand", "model", "year"].map((field) => (
             <input
-              name="name"
-              placeholder="ФИО"
+              key={field}
+              name={field}
+              placeholder={
+                field === "name"
+                  ? "ФИО"
+                  : field === "phone"
+                  ? "Номер телефона"
+                  : field === "brand"
+                  ? "Марка автомобиля"
+                  : field === "model"
+                  ? "Модель автомобиля"
+                  : "Год выпуска автомобиля"
+              }
               className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200"
-              required
+              required={field === "phone"}
             />
-            <input
-              name="phone"
-              placeholder="Номер телефона"
-              className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200"
-              required
-            />
-            <input
-              name="brand"
-              placeholder="Марка автомобиля"
-              className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200"
-            />
-            <input
-              name="model"
-              placeholder="Модель автомобиля"
-              className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200"
-            />
-            <input
-              name="year"
-              placeholder="Год выпуска автомобиля"
-              className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200"
-            />
-            <select
-              name="type"
-              className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200 w-full"
-              defaultValue=""
-            >
-              <option value="" disabled hidden>
-                Состояние авто
+          ))}
+
+          <select
+            name="type"
+            className="bg-[#2a2a2a]/80 border border-gray-600 rounded-lg px-4 py-3 text-white appearance-none focus:outline-none focus:ring-2 focus:ring-red-700 transition-all duration-200 w-full"
+            defaultValue=""
+          >
+            <option value="" disabled hidden>
+              Состояние авто
+            </option>
+            {[
+              "Идеальное",
+              "С пробегом",
+              "Битое",
+              "Кредитное",
+              "После ДТП",
+              "Не на ходу",
+              "Другое",
+            ].map((v) => (
+              <option key={v} value={v.toLowerCase()} className="bg-[#111111] text-white">
+                {v}
               </option>
-              {[
-                "Идеальное",
-                "С пробегом",
-                "Битое",
-                "Кредитное",
-                "После ДТП",
-                "Не на ходу",
-                "Другое",
-              ].map((v) => (
-                <option
-                  key={v}
-                  value={v.toLowerCase()}
-                  className="bg-[#111111] text-white"
-                >
-                  {v}
-                </option>
-              ))}
-            </select>
+            ))}
+          </select>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-white text-black font-semibold py-3 rounded-lg hover:bg-red-700 hover:text-white transition-all duration-200 shadow-md"
+          {/* Анимированная кнопка */}
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileTap={{ scale: 0.97 }}
+            animate={{
+              opacity: loading ? 0.7 : 1,
+              backgroundColor:
+                status === "success"
+                  ? "#16a34a" // зелёный
+                  : status === "error"
+                  ? "#dc2626" // красный
+                  : "#ffffff", // белый по умолчанию
+              color: status === "success" || status === "error" ? "#ffffff" : "#000000",
+            }}
+            transition={{ duration: 0.3 }}
+            className="font-semibold py-3 rounded-lg shadow-md transition-all duration-300 hover:bg-red-700 hover:text-white disabled:opacity-60"
+          >
+            {loading
+              ? "⏳ Отправка..."
+              : status === "success"
+              ? "✅ Отправлено!"
+              : status === "error"
+              ? "❌ Ошибка"
+              : "Отправить заявку"}
+          </motion.button>
+        </form>
+
+        {/* Анимированные сообщения */}
+        <AnimatePresence>
+          {status === "success" && (
+            <motion.p
+              key="success"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-green-500 text-center mt-3"
             >
-              {loading ? "Отправляем..." : "Отправить заявку"}
-            </button>
-          </form>
-
-          {ok === true && (
-            <p className="text-green-500 text-center mt-3">
               ✅ Заявка успешно отправлена
-            </p>
+            </motion.p>
           )}
-          {ok === false && (
-            <p className="text-red-500 text-center mt-3">
-              ❌ Ошибка при отправке
-            </p>
+          {status === "tooFast" && (
+            <motion.p
+              key="tooFast"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-yellow-500 text-center mt-3"
+            >
+              ⚠️ Подождите 10 секунд перед повторной отправкой.
+            </motion.p>
           )}
+          {status === "error" && (
+            <motion.p
+              key="error"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="text-red-500 text-center mt-3"
+            >
+              ❌ Ошибка при отправке. Попробуйте позже.
+            </motion.p>
+          )}
+        </AnimatePresence>
 
-          <p className="text-center text-sm mt-4 text-gray-300 leading-snug">
-            Просто <span className="text-red-600">оставьте заявку</span> — мы
-            свяжемся с вами в течение{" "}
-            <span className="text-red-600">2 минут</span>.
-          </p>
-        </div>
+        <p className="text-center text-sm mt-4 text-gray-300 leading-snug">
+          Просто <span className="text-red-600">оставьте заявку</span> — мы свяжемся с
+          вами в течение <span className="text-red-600">2 минут</span>.
+        </p>
+      </motion.div>
+
       </section>
 
       {/* Блок городов */}
       <section
         ref={citiesRef}
-        className={`relative z-10 bg-black/80 text-white py-16 px-6 sm:px-10 md:px-20 transform transition-all duration-1000 ${
+        className={`relative z-10 bg-black/80 text-white py-16 px-6 sm:px-10 md:px-20 transform transition-all duration-700 ease-in-out ${
           visible
-            ? "opacity-100 translate-y-0"
-            : "opacity-0 translate-y-10"
+            ? "opacity-100 translate-y-0 scale-100"
+            : "opacity-0 translate-y-10 scale-95"
         }`}
       >
         <h2 className="text-center text-2xl sm:text-3xl font-bold mb-6 text-[#C70000]">
           Работаем по всей Свердловской области
         </h2>
         <p className="text-center max-w-3xl mx-auto text-gray-300 mb-10">
-          Мы приедем в любой город региона — оценим, оформим и выкупим ваш
-          автомобиль в день обращения.
+          Мы приедем в любой город региона — оценим, оформим и выкупим ваш автомобиль в день обращения.
         </p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 text-gray-200 text-sm">
@@ -245,6 +297,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+
 
       {/* FOOTER */}
       <footer className="bg-black/80 py-10 px-6 text-center sm:text-left border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-0">
