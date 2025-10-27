@@ -24,13 +24,18 @@ async function fetchWithTimeout(
 
 export async function POST(req: Request) {
   try {
+    // 🚫 Если выполняется на этапе сборки (prerender), выходим
+    if (typeof process === "undefined" || process.env.NEXT_PHASE === "phase-production-build") {
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Build phase — API disabled" }),
+        { status: 200, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     console.log("✅ API вызван — lead route запущен");
 
     // 🧱 Получаем IP пользователя
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      "unknown";
-
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const now = Date.now();
     const lastRequest = lastRequestMap.get(ip) || 0;
     const diff = now - lastRequest;
@@ -43,14 +48,10 @@ export async function POST(req: Request) {
           ok: false,
           error: "Слишком частые запросы. Повторите через 10 секунд.",
         }),
-        {
-          status: 429,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 429, headers: { "Content-Type": "application/json" } }
       );
     }
 
-    // ✅ Разрешаем и запоминаем время последнего запроса
     lastRequestMap.set(ip, now);
 
     const body = await req.json();
@@ -62,10 +63,7 @@ export async function POST(req: Request) {
     if (!phone) {
       return new NextResponse(
         JSON.stringify({ ok: false, error: "Phone is required" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
@@ -76,32 +74,25 @@ export async function POST(req: Request) {
       console.warn("⚠️ Некорректный номер телефона:", phone);
       return new NextResponse(
         JSON.stringify({ ok: false, error: "Invalid phone number" }),
-        {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 400, headers: { "Content-Type": "application/json" } }
       );
     }
 
     // ⚙️ Переменные окружения
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
-
     if (!token || !chatIdsRaw) {
       console.error("❌ Отсутствует TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID");
       return new NextResponse(
         JSON.stringify({ ok: false, error: "Missing Telegram config" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json" },
-        }
+        { status: 500, headers: { "Content-Type": "application/json" } }
       );
     }
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
-    // 💬 Формируем сообщение
+    // 💬 Сообщение
     const message =
       `🆕 Новая заявка на выкуп авто\n` +
       `━━━━━━━━━━━━━━━━━━━\n` +
@@ -119,15 +110,12 @@ export async function POST(req: Request) {
     const keyboard = {
       inline_keyboard: [
         [
-          {
-            text: "💬 Написать в WhatsApp",
-            url: `https://wa.me/${waNumber}`,
-          },
+          { text: "💬 Написать в WhatsApp", url: `https://wa.me/${waNumber}` },
         ],
       ],
     };
 
-    // 🚀 Отправка в Telegram
+    // 🚀 Отправка сообщений
     for (const chatId of chatIds) {
       try {
         const response = await fetchWithTimeout(
@@ -144,13 +132,7 @@ export async function POST(req: Request) {
           20000
         );
 
-        let data: any = null;
-        try {
-          data = await response.json();
-        } catch {
-          console.error("⚠️ Не удалось разобрать ответ Telegram как JSON");
-        }
-
+        const data = await response.json().catch(() => null);
         if (!data?.ok) {
           console.error(`❌ Ошибка Telegram (${chatId}):`, data?.description || "Unknown error");
         } else {
@@ -161,18 +143,15 @@ export async function POST(req: Request) {
       }
     }
 
-    return new NextResponse(JSON.stringify({ ok: true }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return new NextResponse(
+      JSON.stringify({ ok: true }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   } catch (err: any) {
     console.error("❌ API error:", err);
     return new NextResponse(
       JSON.stringify({ ok: false, error: err.message || "Unknown error" }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
 }
