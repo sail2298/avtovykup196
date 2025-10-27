@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start --port ${PORT:-3000}"
+    "start": "node -e \"require('child_process').spawn('next', ['start', '--port', process.env.PORT || 3000], { stdio: 'inherit' })\""
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",
