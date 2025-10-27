@@ -74,8 +74,8 @@ export async function POST(req: Request) {
     }
 
     // ⚙️ Конфигурация Telegram (временно прописано прямо в коде)
-    const token = "7997711297:AAG9F3WhCoNy0xw7czSFFrteOCFEwMhle0I";
-    const chatIdsRaw = "1207718807,5352538337";
+    const token = "8471323802:AAFrEQuhKgOFlEUlE0Ha3DaXIuFtgtzTjl8";
+    const chatIdsRaw = "1207718807,5325233837";
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
