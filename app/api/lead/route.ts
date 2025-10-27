@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 
 // 🧠 Временная память (антиспам) — IP → время последней отправки
@@ -24,14 +26,6 @@ async function fetchWithTimeout(
 
 export async function POST(req: Request) {
   try {
-    // 🚫 Если выполняется на этапе сборки (prerender), выходим
-    if (typeof process === "undefined" || process.env.NEXT_PHASE === "phase-production-build") {
-      return new NextResponse(
-        JSON.stringify({ ok: false, error: "Build phase — API disabled" }),
-        { status: 200, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     console.log("✅ API вызван — lead route запущен");
 
     // 🧱 Получаем IP пользователя
@@ -52,6 +46,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ Запоминаем время последнего запроса
     lastRequestMap.set(ip, now);
 
     const body = await req.json();
@@ -81,6 +76,7 @@ export async function POST(req: Request) {
     // ⚙️ Переменные окружения
     const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
+
     if (!token || !chatIdsRaw) {
       console.error("❌ Отсутствует TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID");
       return new NextResponse(
