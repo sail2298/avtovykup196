@@ -26,11 +26,49 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <head>
-        {/* ✅ Важно для адаптивности на телефонах */}
+        {/* ✅ Для адаптивности на телефонах */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        {/* ✅ Yandex.Metrika — подключается только на клиенте */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function(m,e,t,r,i,k,a){
+                  m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+                  m[i].l=1*new Date();
+                  for (var j = 0; j < document.scripts.length; j++) {
+                      if (document.scripts[j].src === r) { return; }
+                  }
+                  k=e.createElement(t),a=e.getElementsByTagName(t)[0];
+                  k.async=1;k.src=r;a.parentNode.insertBefore(k,a)
+              })(window, document, "script", "https://mc.yandex.ru/metrika/tag.js?id=104859381", "ym");
+
+              ym(104859381, "init", {
+                  ssr:true,
+                  webvisor:true,
+                  clickmap:true,
+                  ecommerce:"dataLayer",
+                  accurateTrackBounce:true,
+                  trackLinks:true
+              });
+            `,
+          }}
+        />
       </head>
+
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+
+        {/* ✅ Поддержка noscript (если JS выключен) */}
+        <noscript>
+          <div>
+            <img
+              src="https://mc.yandex.ru/watch/104859381"
+              style={{ position: "absolute", left: "-9999px" }}
+              alt=""
+            />
+          </div>
+        </noscript>
       </body>
     </html>
   );
