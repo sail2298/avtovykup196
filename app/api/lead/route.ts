@@ -73,17 +73,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚙️ Переменные окружения
-    const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
-
-    if (!token || !chatIdsRaw) {
-      console.error("❌ Отсутствует TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID");
-      return new NextResponse(
-        JSON.stringify({ ok: false, error: "Missing Telegram config" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
-      );
-    }
+    // ⚙️ Конфигурация Telegram (временно прописано прямо в коде)
+    const token = "7997711297:AAG9FI3WhCoNy0xw7czSFFrteOCFEwNhIe0I";
+    const chatIdsRaw = "1207718807,5352538337";
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
