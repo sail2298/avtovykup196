@@ -9,7 +9,7 @@ const handle = app.getRequestHandler();
 app.prepare().then(() => {
   createServer((req, res) => {
     handle(req, res);
-  }).listen(port, () => {
-    console.log(`🚀 Server ready on port ${port}`);
+  }).listen(port, "0.0.0.0", () => {
+    console.log(`✅ Server ready on 0.0.0.0:${port}`);
   });
 });
