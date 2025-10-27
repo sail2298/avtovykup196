@@ -74,7 +74,7 @@ export async function POST(req: Request) {
     }
 
     // ⚙️ Конфигурация Telegram (временно прописано прямо в коде)
-    const token = "8471323802:AAFrEQuhKgOFlEUlE0Ha3DaXIuFtgtzTjl8";
+    const token = process.env.TELEGRAM_BOT_TOKEN;
     const chatIdsRaw = "1207718807,5325233837";
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
