@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 
-// 🧠 Временная память (антиспам) — IP → время последней отправки
+// 🧠 Память для антиспама (IP → время последней отправки)
 const lastRequestMap = new Map<string, number>();
 
 // 🕒 Универсальный fetch с таймаутом
@@ -28,13 +28,12 @@ export async function POST(req: Request) {
   try {
     console.log("✅ API вызван — lead route запущен");
 
-    // 🧱 Получаем IP пользователя
+    // 🔍 Антиспам
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const now = Date.now();
     const lastRequest = lastRequestMap.get(ip) || 0;
     const diff = now - lastRequest;
 
-    // 🚫 Если прошло меньше 10 секунд — блокируем
     if (diff < 10_000) {
       console.warn(`⏳ Частые запросы с IP ${ip}`);
       return new NextResponse(
@@ -46,7 +45,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // ✅ Запоминаем время последнего запроса
     lastRequestMap.set(ip, now);
 
     const body = await req.json();
@@ -54,7 +52,7 @@ export async function POST(req: Request) {
 
     const { name, phone, brand, model, year, type } = body;
 
-    // 🧩 Проверка обязательных данных
+    // Проверка телефона
     if (!phone) {
       return new NextResponse(
         JSON.stringify({ ok: false, error: "Phone is required" }),
@@ -62,7 +60,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 📱 Очистка и валидация номера
     const cleanPhone = phone.replace(/[^\d+]/g, "");
     const isValid = /^(\+7|7|8)\d{10}$/.test(cleanPhone);
     if (!isValid) {
@@ -73,14 +70,33 @@ export async function POST(req: Request) {
       );
     }
 
-    // ⚙️ Конфигурация Telegram (временно прописано прямо в коде)
+    // ⚙️ Читаем переменные из .env.local
     const token = process.env.TELEGRAM_BOT_TOKEN;
-    const chatIdsRaw = "1207718807,5325233837";
+    const chatIdsRaw = process.env.TELEGRAM_CHAT_ID;
+
+    if (!token || !chatIdsRaw) {
+      console.error("❌ TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не заданы");
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Missing Telegram config" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    // Проверка токена
+    const test = await fetch(`https://api.telegram.org/bot${token}/getMe`);
+    const check = await test.json();
+    if (!check.ok) {
+      console.error("❌ Токен Telegram недействителен:", check);
+      return new NextResponse(
+        JSON.stringify({ ok: false, error: "Invalid Telegram token" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
 
     const chatIds = chatIdsRaw.split(",").map((id) => id.trim());
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
-    // 💬 Сообщение
+    // 📨 Сообщение
     const message =
       `🆕 Новая заявка на выкуп авто\n` +
       `━━━━━━━━━━━━━━━━━━━\n` +
@@ -93,14 +109,9 @@ export async function POST(req: Request) {
       `🕒 Время: ${new Date().toLocaleString("ru-RU")}\n` +
       `━━━━━━━━━━━━━━━━━━━`;
 
-    // 💬 Кнопка WhatsApp
     const waNumber = cleanPhone.replace(/^\+?8/, "7").replace(/^\+/, "");
     const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "💬 Написать в WhatsApp", url: `https://wa.me/${waNumber}` },
-        ],
-      ],
+      inline_keyboard: [[{ text: "💬 Написать в WhatsApp", url: `https://wa.me/${waNumber}` }]],
     };
 
     // 🚀 Отправка сообщений
@@ -111,11 +122,7 @@ export async function POST(req: Request) {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              chat_id: chatId,
-              text: message,
-              reply_markup: keyboard,
-            }),
+            body: JSON.stringify({ chat_id: chatId, text: message, reply_markup: keyboard }),
           },
           20000
         );
