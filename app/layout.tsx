@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   title: "AvtoVykup196.ru — выкуп авто в Свердловской области",
   description:
     "Быстрый и честный выкуп автомобилей в Свердловской области. Деньги сразу, любая комплектация и состояние.",
+  // ✅ Добавляем сюда мета-тег для подтверждения в Яндексе:
+  other: {
+    "yandex-verification": "2ea3a99d83033e35",
+  },
 };
 
 export default function RootLayout({
