@@ -13,13 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AvtoVykup196.ru — выкуп авто в Свердловской области",
+  title: "AvtoVykup196.ru - выкуп авто в Свердловской области",
   description:
     "Быстрый и честный выкуп автомобилей в Свердловской области. Деньги сразу, любая комплектация и состояние.",
-  // ✅ Добавляем сюда мета-тег для подтверждения в Яндексе:
-  other: {
-    "yandex-verification": "2ea3a99d83033e35",
-  },
 };
 
 export default function RootLayout({
@@ -32,6 +28,9 @@ export default function RootLayout({
       <head>
         {/* ✅ Для адаптивности на телефонах */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+        {/* ✅ Подтверждение сайта в Яндекс Вебмастере */}
+        <meta name="yandex-verification" content="2ea3a99d83033e35" />
 
         {/* ✅ Yandex.Metrika — подключается только на клиенте */}
         <script
